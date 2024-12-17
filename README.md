@@ -13,7 +13,7 @@
 **MY-UNISWAP V1** includes the following key features:
 
 - **Factory Contract**: Deploys and manages multiple Exchange contracts, supporting trading pairs for different ERC20 tokens.
-- **Exchange Contract** (**V1 Version**):
+- **Exchange Contract**:
   - **Liquidity Provision and Removal**: Users can add or remove liquidity to the pool and receive LP token rewards.
   - **ETH ↔ Token Swap**: Users can swap ETH for a target ERC20 token.
   - **Token ↔ Token Swap**: Achieves swaps between different ERC20 tokens using ETH as an intermediary.
@@ -58,7 +58,7 @@ MY-UNISWAP/
 **MY-UNISWAP V1** 包括以下主要功能：
 
 - **Factory 合约**：用于部署并管理多个 Exchange 合约，支持不同 ERC20 Token 的交易对。
-- **Exchange 合约**（**V1 版本**）：
+- **Exchange 合约**：
   - **流动性提供与移除**：用户可以向交易池添加或移除流动性，获得 LP Token 奖励。
   - **ETH ↔ Token 兑换**：用户可以使用 ETH 交换目标 ERC20 Token。
   - **Token ↔ Token 兑换**：通过中间的 ETH，实现不同 ERC20 Token 之间的交换。
