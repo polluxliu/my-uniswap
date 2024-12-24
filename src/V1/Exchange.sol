@@ -55,6 +55,7 @@ contract Exchange is ERC20 {
             // Initial liquidity: accept full token amount and mint liquidity tokens equal to ETH amount
             tokensToTransfer = _tokenAmount;
 
+            // Use the amount of deposited ethers as liquidity
             liquidity = msg.value;
         } else {
             uint256 ethReserve = address(this).balance - msg.value;
