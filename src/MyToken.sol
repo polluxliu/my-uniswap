@@ -9,6 +9,13 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
  * @notice This contract implements a custom ERC20 token with an initial supply
  */
 contract MyToken is ERC20 {
+    address public owner;
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can call this function");
+        _;
+    }
+
     /**
      * @notice Constructor function to initialize the token
      * @param name The name of the token
@@ -16,7 +23,17 @@ contract MyToken is ERC20 {
      * @param initialSupply The initial supply of tokens to mint
      */
     constructor(string memory name, string memory symbol, uint256 initialSupply) ERC20(name, symbol) {
+        owner = msg.sender;
         // Mints `initialSupply` tokens to the contract deployer
-        _mint(msg.sender, initialSupply);
+        _mint(owner, initialSupply);
+    }
+
+    /**
+     * @notice Function to mint tokens to a specific address
+     * @param to The address to receive the minted tokens
+     * @param amount The amount of tokens to mint
+     */
+    function mintTo(address to, uint256 amount) external onlyOwner {
+        _mint(to, amount);
     }
 }
