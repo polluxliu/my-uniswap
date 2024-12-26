@@ -199,6 +199,22 @@ contract MyswapPairTest is Test {
          */
     }
 
+    function test_helper() public pure {
+        // uint256 x = 6442450947;
+        // console.log(uint32(x));
+        // console.log(uint32(x % 2 ** 32));
+        uint256 x = 2 * 2 ** 32 + 1;
+        uint256 y = 0 * 2 ** 32 + 2;
+        console.log(x - y);
+
+        unchecked {
+            uint32 r1 = 1;
+            uint32 r2 = 2;
+            uint32 z = r1 - r2;
+            console.log(z);
+        }
+    }
+
     // Helper function to assert that the reserves match the expected values
     function _assertPairReserves(uint112 expected0, uint112 expected1) private view {
         (uint112 reserve0, uint112 reserve1) = pair.getReserves();
