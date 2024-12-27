@@ -24,7 +24,8 @@ contract MyswapPairTest is Test {
         token1.mintTo(userA, 10 ether);
 
         // Create a new liquidity pair contract using the two tokens
-        pair = new MyswapPair(address(token0), address(token1));
+        pair = new MyswapPair();
+        pair.initialize(address(token0), address(token1));
     }
 
     // Test case: Minting liquidity for the first time to initialize the pool

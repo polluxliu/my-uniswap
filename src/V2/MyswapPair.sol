@@ -36,10 +36,25 @@ contract MyswapPair is ERC20 {
 
     /**
      * @dev Constructor for the pair contract.
+     */
+    constructor() ERC20("MY-UNISWAP", "MU", 18) {}
+
+    /**
+     * @dev Initializes the pair contract with two token addresses.
+     * This function can only be called once, ensuring that the pair contract
+     * is properly set up with the specified token addresses.
+     *
      * @param _token0 Address of the first token in the pair.
      * @param _token1 Address of the second token in the pair.
+     *
+     * Requirements:
+     * - The contract must not have been initialized previously (token0 and token1 must be zero addresses).
      */
-    constructor(address _token0, address _token1) ERC20("MY-UNISWAP", "MU", 18) {
+    function initialize(address _token0, address _token1) external {
+        // Ensure the contract has not been initialized already.
+        require(token0 == address(0) && token1 == address(0), "ALREADY_INITIALIZED");
+
+        // Assign token addresses to the contract.
         token0 = _token0;
         token1 = _token1;
     }
@@ -47,7 +62,7 @@ contract MyswapPair is ERC20 {
     /**
      * @dev Mints liquidity tokens to the sender based on the provided token amounts.
      */
-    function mint() public {
+    function mint() external {
         (uint112 _reserve0, uint112 _reserve1) = getReserves();
 
         uint256 balance0 = IERC20(token0).balanceOf(address(this));
@@ -84,7 +99,7 @@ contract MyswapPair is ERC20 {
     /**
      * @dev Burns liquidity tokens and returns the underlying tokens to the sender.
      */
-    function burn() public {
+    function burn() external {
         uint256 balance0 = IERC20(token0).balanceOf(address(this));
         uint256 balance1 = IERC20(token1).balanceOf(address(this));
 
@@ -113,7 +128,7 @@ contract MyswapPair is ERC20 {
         _updateReserves(balance0, balance1, _reserve0, _reserve1);
     }
 
-    function swap(uint256 amount0Out, uint256 amount1Out, address to) public {
+    function swap(uint256 amount0Out, uint256 amount1Out, address to) external {
         // Step 1: Checks
 
         // Ensure that at least one of the output amounts is greater than zero
