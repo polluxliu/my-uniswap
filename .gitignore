@@ -14,7 +14,7 @@ docs/
 .env
 
 # Forge install
-lib/
+lib/*
 
 # Desktop Services Store
 .DS_Store
