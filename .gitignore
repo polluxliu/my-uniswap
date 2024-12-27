@@ -16,4 +16,6 @@ docs/
 # Forge install
 lib/
 
+# Desktop Services Store
 .DS_Store
+**/.DS_Store
