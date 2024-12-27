@@ -15,3 +15,5 @@ docs/
 
 # Forge install
 lib/
+
+.DS_Store
