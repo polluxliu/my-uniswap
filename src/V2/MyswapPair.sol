@@ -60,9 +60,11 @@ contract MyswapPair is ERC20 {
     }
 
     /**
-     * @dev Mints liquidity tokens to the sender based on the provided token amounts.
+     * @notice Mints liquidity tokens to the address specified based on the provided token amounts
+     * @param to The address that will receive the minted liquidity tokens
+     * @return liquidity The amount of liquidity tokens minted
      */
-    function mint() external {
+    function mint(address to) external returns (uint256 liquidity) {
         (uint112 _reserve0, uint112 _reserve1) = getReserves();
 
         uint256 balance0 = IERC20(token0).balanceOf(address(this));
@@ -71,8 +73,6 @@ contract MyswapPair is ERC20 {
         // Calculate how many tokens were added to the pool
         uint256 amount0 = balance0 - _reserve0;
         uint256 amount1 = balance1 - _reserve1;
-
-        uint256 liquidity;
 
         if (totalSupply == 0) {
             // Calculate initial liquidity using geometric mean
@@ -89,8 +89,8 @@ contract MyswapPair is ERC20 {
         // Ensure liquidity is greater than zero
         require(liquidity > 0, "INSUFFICIENT_LIQUIDITY_MINTED");
 
-        // Mint liquidity tokens to the sender
-        _mint(msg.sender, liquidity);
+        // Mint liquidity tokens to the address specified
+        _mint(to, liquidity);
 
         // Update the reserves to reflect the new state
         _updateReserves(balance0, balance1, _reserve0, _reserve1);

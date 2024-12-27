@@ -35,7 +35,7 @@ contract MyswapPairTest is Test {
         token1.transfer(address(pair), 1 ether);
 
         // Mint liquidity tokens to initialize the pool
-        pair.mint();
+        pair.mint(address(this));
 
         // Assert that the user's balance reflects minted LP tokens minus the minimum liquidity lock
         assertEq(pair.balanceOf(address(this)), 1 ether - 1000);
@@ -52,12 +52,12 @@ contract MyswapPairTest is Test {
         // Initialize the pool with 1 ether of each token
         token0.transfer(address(pair), 1 ether);
         token1.transfer(address(pair), 1 ether);
-        pair.mint();
+        pair.mint(address(this));
 
         // Transfer additional balanced liquidity (3 ether of each token)
         token0.transfer(address(pair), 3 ether);
         token1.transfer(address(pair), 3 ether);
-        pair.mint();
+        pair.mint(address(this));
 
         // Assert the user's LP token balance reflects the total liquidity they added minus the minimum liquidity
         assertEq(pair.balanceOf(address(this)), 4 ether - 1000);
@@ -73,12 +73,12 @@ contract MyswapPairTest is Test {
     function test_mint_addition_unbalanced() public {
         token0.transfer(address(pair), 1 ether);
         token1.transfer(address(pair), 1 ether);
-        pair.mint();
+        pair.mint(address(this));
 
         // Transfer additional unbalanced liquidity (4 ether of token0, 2 ether of token1)
         token0.transfer(address(pair), 4 ether);
         token1.transfer(address(pair), 2 ether);
-        pair.mint();
+        pair.mint(address(this));
 
         // Assert the user's LP token balance reflects the liquidity they added (limited by the smaller proportion)
         assertEq(pair.balanceOf(address(this)), 3 ether - 1000);
@@ -95,7 +95,7 @@ contract MyswapPairTest is Test {
         // Initialize the pool with 1 ether of each token
         token0.transfer(address(pair), 1 ether);
         token1.transfer(address(pair), 1 ether);
-        pair.mint();
+        pair.mint(address(this));
 
         // Get the user's LP token balance and transfer it to the pair contract for burning
         uint256 liquidity = pair.balanceOf(address(this));
@@ -123,12 +123,12 @@ contract MyswapPairTest is Test {
         // Initialize the pool with 1 ether of each token
         token0.transfer(address(pair), 1 ether);
         token1.transfer(address(pair), 1 ether);
-        pair.mint();
+        pair.mint(address(this));
 
         // Add unbalanced liquidity (2 ether of token0, 1 ether of token1)
         token0.transfer(address(pair), 2 ether);
         token1.transfer(address(pair), 1 ether);
-        pair.mint();
+        pair.mint(address(this));
 
         // Get the user's LP token balance and transfer it to the pair contract for burning
         uint256 liquidity = pair.balanceOf(address(this));
@@ -157,7 +157,7 @@ contract MyswapPairTest is Test {
         vm.startPrank(userA);
         token0.transfer(address(pair), 1 ether);
         token1.transfer(address(pair), 1 ether);
-        pair.mint();
+        pair.mint(userA);
         vm.stopPrank();
 
         // Assert initial LP token balances and total supply
@@ -168,7 +168,7 @@ contract MyswapPairTest is Test {
         // This contract adds unbalanced liquidity (more token0 than token1)
         token0.transfer(address(pair), 2 ether);
         token1.transfer(address(pair), 1 ether);
-        pair.mint();
+        pair.mint(address(this));
 
         // This contract burns its LP tokens
         uint256 balance = pair.balanceOf(address(this));
@@ -198,22 +198,6 @@ contract MyswapPairTest is Test {
          * The test contract incurred a loss of 0.5 ETH due to providing unbalanced liquidity,
          * and this loss was ultimately gained by UserA.
          */
-    }
-
-    function test_helper() public pure {
-        // uint256 x = 6442450947;
-        // console.log(uint32(x));
-        // console.log(uint32(x % 2 ** 32));
-        uint256 x = 2 * 2 ** 32 + 1;
-        uint256 y = 0 * 2 ** 32 + 2;
-        console.log(x - y);
-
-        unchecked {
-            uint32 r1 = 1;
-            uint32 r2 = 2;
-            uint32 z = r1 - r2;
-            console.log(z);
-        }
     }
 
     // Helper function to assert that the reserves match the expected values
