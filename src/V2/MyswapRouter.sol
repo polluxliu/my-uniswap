@@ -59,6 +59,40 @@ contract MyswapRouter {
     }
 
     /**
+     * @dev Removes liquidity for a given token pair and transfers the underlying tokens to the specified address.
+     * @param tokenA The address of token A.
+     * @param tokenB The address of token B.
+     * @param liquidity The amount of liquidity tokens to remove.
+     * @param amountAMin The minimum amount of `tokenA` that must be received.
+     * @param amountBMin The minimum amount of `tokenB` that must be received.
+     * @param to The address to which the underlying tokens will be sent.
+     * @return amountA The amount of `tokenA` returned to the specified address.
+     * @return amountB The amount of `tokenB` returned to the specified address.
+     */
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 liquidity,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to
+    ) external returns (uint256 amountA, uint256 amountB) {
+        // Get the pair address for the token pair.
+        address pair = MyswapLibrary.pairFor(address(factory), tokenA, tokenB);
+
+        // Transfer liquidity tokens from the sender to the pair contract.
+        IMyswapPair(pair).transferFrom(msg.sender, pair, liquidity);
+
+        // Burn liquidity tokens and get the amounts of token A and token B to return.
+        (uint256 amount0, uint256 amount1) = IMyswapPair(pair).burn(to);
+        (address token0,) = MyswapLibrary.sortTokens(tokenA, tokenB);
+        (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
+
+        require(amountA >= amountAMin, "INSUFFICIENT_A_AMOUNT");
+        require(amountB >= amountBMin, "INSUFFICIENT_B_AMOUNT");
+    }
+
+    /**
      * @dev Calculates the optimal amounts of token A and token B to add as liquidity.
      * @param tokenA The address of token A.
      * @param tokenB The address of token B.
@@ -115,5 +149,63 @@ contract MyswapRouter {
         (bool success, bytes memory data) =
             token.call(abi.encodeWithSignature("transferFrom(address,address,uint256)", from, to, amount));
         require(success && (data.length == 0 || abi.decode(data, (bool))), "TRANSFER_FAILED");
+    }
+
+    /**
+     * @notice Swaps an exact amount of input tokens for output tokens, requiring minimum output amount
+     * @dev Performs chained swaps through multiple pairs based on the path
+     * @param amountIn The amount of input tokens to send
+     * @param amountOutMin The minimum amount of output tokens that must be received
+     * @param path An array of token addresses representing the swap path
+     * @param to The address that will receive the output tokens
+     * @return amounts An array where amounts[0] is the input amount and
+     *                 amounts[1...n] are the output amounts for each swap step
+     */
+    function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to)
+        external
+        returns (uint256[] memory amounts)
+    {
+        // The input amount and subsequent output amounts for the entire swap path
+        amounts = MyswapLibrary.getAmountsOut(address(factory), amountIn, path);
+
+        // Verify the final amount meets the minimum requirement
+        require(amounts[amounts.length - 1] >= amountOutMin, "INSUFFICIENT_OUTPUT_AMOUNT");
+
+        // Transfer the input tokens from sender to the first pair
+        _safeTransferFrom(path[0], msg.sender, MyswapLibrary.pairFor(address(factory), path[0], path[1]), amounts[0]);
+
+        // Execute the swap chain
+        _swap(amounts, path, to);
+    }
+
+    /**
+     * @notice Internal function to execute a series of swaps through multiple pairs
+     * @dev For each step in the path, it calculates the input/output amounts and performs the swap
+     * @param amounts Array of amounts for each swap in the path
+     * @param path Array of token addresses defining the swap route
+     * @param to Final recipient of the swapped tokens
+     */
+    function _swap(uint256[] memory amounts, address[] memory path, address to) private {
+        for (uint256 i = 1; i < path.length; i++) {
+            // Get the input and output token addresses for this step
+            (address input, address output) = (path[i - 1], path[i]);
+
+            // Get the output amount for this step
+            uint256 amountOut = amounts[i];
+
+            // Determine which token is token0 in the pair
+            (address token0,) = MyswapLibrary.sortTokens(input, output);
+
+            // Calculate amount0Out and amount1Out based on which token is token0
+            (uint256 amount0Out, uint256 amount1Out) =
+                input == token0 ? (uint256(0), amountOut) : (amountOut, uint256(0));
+
+            // If this is not the final swap, the recipient is the next pair
+            // Otherwise, it's the final recipient specified in the parameters
+            address _to = i < path.length - 1 ? MyswapLibrary.pairFor(address(factory), output, path[i + 1]) : to;
+
+            // Execute the swap through the pair contract
+            IMyswapPair(MyswapLibrary.pairFor(address(factory), input, output)).swap(amount0Out, amount1Out, _to);
+        }
     }
 }

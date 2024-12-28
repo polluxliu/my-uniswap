@@ -35,7 +35,7 @@ contract MyswapPair is ERC20 {
     uint256 public price1CumulativeLast;
 
     /**
-     * @dev Constructor for the pair contract.
+     * @dev Constructor for the pair contract
      */
     constructor() ERC20("MY-UNISWAP", "MU", 18) {}
 
@@ -97,9 +97,12 @@ contract MyswapPair is ERC20 {
     }
 
     /**
-     * @dev Burns liquidity tokens and returns the underlying tokens to the sender.
+     * @dev Burns liquidity tokens and returns the underlying tokens to the address specified
+     * @param to The address to which the underlying tokens will be sent.
+     * @return amount0 The amount of `token0` sent to the specified address.
+     * @return amount1 The amount of `token1` sent to the specified address.
      */
-    function burn() external {
+    function burn(address to) external returns (uint256 amount0, uint256 amount1) {
         uint256 balance0 = IERC20(token0).balanceOf(address(this));
         uint256 balance1 = IERC20(token1).balanceOf(address(this));
 
@@ -107,8 +110,8 @@ contract MyswapPair is ERC20 {
         uint256 liquidity = balanceOf[address(this)];
 
         // Calculate how much of each token corresponds to the liquidity being burned
-        uint256 amount0 = (liquidity * balance0) / totalSupply;
-        uint256 amount1 = (liquidity * balance1) / totalSupply;
+        amount0 = (liquidity * balance0) / totalSupply;
+        amount1 = (liquidity * balance1) / totalSupply;
 
         // Ensure there is sufficient liquidity to burn
         require(amount0 > 0 && amount1 > 0, "INSUFFICIENT_LIQUIDITY_BURNED");
@@ -116,9 +119,9 @@ contract MyswapPair is ERC20 {
         // Burn the liquidity tokens from the contract
         _burn(address(this), liquidity);
 
-        // Transfer the corresponding tokens to the sender
-        _safeTransfer(token0, msg.sender, amount0);
-        _safeTransfer(token1, msg.sender, amount1);
+        // Transfer the corresponding tokens to the address specified
+        _safeTransfer(token0, to, amount0);
+        _safeTransfer(token1, to, amount1);
 
         // Update the reserves after the burn
         balance0 = IERC20(token0).balanceOf(address(this));

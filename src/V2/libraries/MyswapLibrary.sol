@@ -83,6 +83,7 @@ library MyswapLibrary {
 
     /**
      * @dev Given an input amount of tokenIn and pair reserves, returns the output amount of tokenOut.
+     * @notice Used when adding liquidity to determine the proportional amount of the second token to add.
      * @param amountIn The input amount of tokenIn.
      * @param reserveIn The reserve of the tokenIn.
      * @param reserveOut The reserve of the tokenOut.
@@ -96,5 +97,58 @@ library MyswapLibrary {
         // --- =  ---
         //  dx     x
         amountOut = amountIn * reserveOut / reserveIn;
+    }
+
+    /**
+     * @dev Calculates the output amount of one token for a given input amount of another token,
+     * @notice Used when performing a token swap to calculate how much of the output token
+     *   will be received for a given input amount of the other token, considering trading fees.
+     * @param amountIn The amount of input token provided for the swap.
+     * @param reserveIn The reserve of the input token in the pool.
+     * @param reserveOut The reserve of the output token in the pool.
+     * @return amountOut The calculated amount of the output token after deducting fees.
+     */
+    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
+        internal
+        pure
+        returns (uint256 amountOut)
+    {
+        require(amountIn > 0, "INSUFFICIENT_AMOUNT");
+        require(reserveIn > 0 && reserveOut > 0, "INSUFFICIENT_LIQUIDITY");
+
+        //            dx*(1-f) * 1000
+        //  dy =  ----------------------- * y
+        //         [x + dx*(1-f)] * 1000
+
+        uint256 amountInWithFee = amountIn * 997;
+        uint256 numerator = amountInWithFee * reserveOut;
+        uint256 denominator = reserveIn * 1000 + amountInWithFee;
+
+        amountOut = numerator / denominator;
+    }
+
+    /**
+     * @dev Calculates the output amounts of tokens for a given input amount and a specified swap path.
+     * @notice This function traverses through a path of token pairs, calculating the output amount at each step
+     *   based on the reserves of the token pairs and the provided input amount.
+     * @param factory The address of the factory contract used to get token pair address.
+     * @param amountIn The amount of the input token to swap.
+     * @param path An array of token addresses representing the swap path (e.g., [tokenA, tokenB, tokenC]).
+     * @return amounts An array of output amounts at each step in the path, where the last element is the final output amount.
+     */
+    function getAmountsOut(address factory, uint256 amountIn, address[] memory path)
+        internal
+        returns (uint256[] memory amounts)
+    {
+        require(path.length >= 2, "INVALID_PATH");
+
+        amounts = new uint256[](path.length);
+        amounts[0] = amountIn;
+
+        // Iterate through the path and calculate output amounts for each pair.
+        for (uint256 i; i < path.length - 1; i++) {
+            (uint256 reserveIn, uint256 reserveOut) = getReserves(factory, path[i], path[i + 1]);
+            amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
+        }
     }
 }

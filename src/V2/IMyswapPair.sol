@@ -6,5 +6,11 @@ interface IMyswapPair {
 
     function mint(address to) external returns (uint256 liquidity);
 
+    function burn(address to) external returns (uint256 amount0, uint256 amount1);
+
+    function swap(uint256 amount0Out, uint256 amount1Out, address to) external;
+
     function getReserves() external returns (uint112, uint112);
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
 }
