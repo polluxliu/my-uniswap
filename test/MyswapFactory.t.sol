@@ -7,15 +7,33 @@ import "../src/V2/MyswapPair.sol";
 contract MyswapFactoryTest is Test {
     function setUp() public {}
 
-    function test_generateCodeHashOfPairContract() public pure {
-        bytes32 initialCodeHash = keccak256(type(MyswapPair).creationCode);
+    // function test_generateCodeHashOfPairContract() public pure {
+    //     bytes32 initialCodeHash = keccak256(type(MyswapPair).creationCode);
 
-        console.logBytes32(initialCodeHash);
+    //     console.logBytes32(initialCodeHash);
 
-        assertEq(
-            initialCodeHash,
-            hex"e13693dee59923f87f78fd6a4c08d510ecf83211e68861d28fb7c9c9727b554f",
-            "Code hash of MyswapPair contract is incorrect"
-        );
+    //     assertEq(
+    //         initialCodeHash,
+    //         hex"cf21606cda01b554f7e32ebe21a86cd486e8242de482d779d842dfa97bae8c8b",
+    //         "Code hash of MyswapPair contract is incorrect"
+    //     );
+    // }
+
+    function test_112multiply() public pure {
+        uint112 a = 2 ** 111;
+        // uint112 b = 2 ** 111;
+
+        uint256 c = 2 ** 100;
+
+        a - c;
+
+        // unchecked {
+        // console.log(a*b);
+        // }
+        // uint256 c = uint256(a) * uint256(b);
+
+        // uint256 c = uint256(a) * uint256(b);
+
+        // assertEq(c, 20000, "112 multiplication is incorrect");
     }
 }

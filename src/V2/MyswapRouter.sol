@@ -179,6 +179,36 @@ contract MyswapRouter {
     }
 
     /**
+     * @notice Swaps tokens for an exact amount of output tokens
+     * @dev Given an output amount and maximum input amount, performs the swap if input amount is within limits
+     * @dev The actual input amount will be less than or equal to amountInMax
+     * @dev Transaction reverts if required input amount exceeds amountInMax
+     * @param amountOut The exact amount of output tokens to receive
+     * @param amountInMax The maximum amount of input tokens that can be used
+     * @param path An array of token addresses representing the swap path
+     * @param to The address that will receive the output tokens
+     * @return amounts An array where amounts[0] is the actual input amount needed and
+     *                 amounts[1...n] are the subsequent output amounts,
+     *                 with amounts[n] being the exact amountOut
+     */
+    function swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] calldata path, address to)
+        external
+        returns (uint256[] memory amounts)
+    {
+        // Calculate the required input amount and subsequent output amounts for the entire swap path
+        amounts = MyswapLibrary.getAmountsIn(address(factory), amountOut, path);
+
+        // Verify the required input amount is within the specified maximum
+        require(amounts[0] <= amountInMax, "EXCESSIVE_INPUT_AMOUNT");
+
+        // Transfer the input tokens from sender to the first pair
+        _safeTransferFrom(path[0], msg.sender, MyswapLibrary.pairFor(address(factory), path[0], path[1]), amounts[0]);
+
+        // Execute the swap chain
+        _swap(amounts, path, to);
+    }
+
+    /**
      * @notice Internal function to execute a series of swaps through multiple pairs
      * @dev For each step in the path, it calculates the input/output amounts and performs the swap
      * @param amounts Array of amounts for each swap in the path

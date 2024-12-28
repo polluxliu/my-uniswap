@@ -34,6 +34,20 @@ contract MyswapPair is ERC20 {
     uint256 public price0CumulativeLast;
     uint256 public price1CumulativeLast;
 
+    // A boolean flag to track if a function is currently being executed
+    // This helps prevent reentrancy attacks where a function could be called again before completing
+    bool private isEntered = false;
+
+    /**
+     * @dev Modifies functions to include reentrancy checks
+     */
+    modifier ReentrancyGuard() {
+        require(!isEntered, "REENTRANCY_GUARD");
+        isEntered = true;
+        _;
+        isEntered = false;
+    }
+
     /**
      * @dev Constructor for the pair contract
      */
@@ -131,9 +145,14 @@ contract MyswapPair is ERC20 {
         _updateReserves(balance0, balance1, _reserve0, _reserve1);
     }
 
-    function swap(uint256 amount0Out, uint256 amount1Out, address to) external {
-        // Step 1: Checks
-
+    /**
+     * @dev Performs a token swap in the liquidity pool, transferring specified output amounts to the recipient
+     * and ensuring that the pool's invariant (k) is maintained or increased.
+     * @param amount0Out The amount of token0 to be sent to the recipient.
+     * @param amount1Out The amount of token1 to be sent to the recipient.
+     * @param to The address of the recipient.
+     */
+    function swap(uint256 amount0Out, uint256 amount1Out, address to) external ReentrancyGuard {
         // Ensure that at least one of the output amounts is greater than zero
         require(amount0Out > 0 || amount1Out > 0, "INSUFFICIENT_OUTPUT_AMOUNT");
 
@@ -143,23 +162,39 @@ contract MyswapPair is ERC20 {
         // Ensure there is enough liquidity in the pool for the requested output
         require(amount0Out < _reserve0 && amount1Out < _reserve1, "INSUFFICIENT_LIQUIDITY");
 
+        // Perform the token transfers to the recipient
+        if (amount0Out > 0) _safeTransfer(token0, to, amount0Out); // Only transfer token0 if amount0Out > 0
+        if (amount1Out > 0) _safeTransfer(token1, to, amount1Out); // Only transfer token1 if amount1Out > 0
+
         // Calculate the new balances after the swap
-        uint256 balance0 = IERC20(token0).balanceOf(address(this)) - amount0Out;
-        uint256 balance1 = IERC20(token1).balanceOf(address(this)) - amount1Out;
+        uint256 balance0 = IERC20(token0).balanceOf(address(this)); // Get updated balance of token0
+        uint256 balance1 = IERC20(token1).balanceOf(address(this)); // Get updated balance of token1
+
+        // Calculate the input amounts for token0 and token1
+        uint256 amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
+        uint256 amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
+
+        // Ensure that at least one of the input amounts is greater than zero
+        require(amount0In > 0 || amount1In > 0, "INSUFFICIENT_INPUT_AMOUNT");
+
+        // (balance0 - amount0In*0.3%) * (balance1 - amount1In*0.3%) >= reserve0 * reserve1
+        // =>
+        // (balance0*1000 - amount0In*3) * (balance1*1000 - amount1In*3) >= reserve0 * reserve1 * 1000^2
+
+        // Adjust balances to account for trading fees (0.3%)
+        // NOTE: This adjustment ensures K-value check is performed AFTER fees are deducted
+        // Example: If input is 100 tokens, fee is 0.3 tokens (0.3%), so only 99.7 tokens contribute to the swap
+        uint256 balance0Adjusted = balance0 * 1000 - amount0In * 3;
+        uint256 balance1Adjusted = balance1 * 1000 - amount1In * 3;
 
         // Ensure the product of reserves (k) is maintained or increased (to prevent invalid swaps)
-        require(balance0 * balance1 >= _reserve0 * _reserve1, "K_INVARIANT_VIOLATION");
-
-        // Step 2: Effects
+        require(
+            balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * uint256(_reserve1) * (1000 ** 2),
+            "K_INVARIANT_VIOLATION"
+        );
 
         // Update reserves after the transfer to reflect the new state
         _updateReserves(balance0, balance1, _reserve0, _reserve1);
-
-        // Step 3: Interactions
-
-        // Perform the token transfers to the recipient
-        _safeTransfer(token0, to, amount0Out);
-        _safeTransfer(token1, to, amount1Out);
     }
 
     /**

@@ -100,7 +100,7 @@ library MyswapLibrary {
     }
 
     /**
-     * @dev Calculates the output amount of one token for a given input amount of another token,
+     * @dev Calculates the output amount of one token for a given input amount of another token in a pair.
      * @notice Used when performing a token swap to calculate how much of the output token
      *   will be received for a given input amount of the other token, considering trading fees.
      * @param amountIn The amount of input token provided for the swap.
@@ -149,6 +149,70 @@ library MyswapLibrary {
         for (uint256 i; i < path.length - 1; i++) {
             (uint256 reserveIn, uint256 reserveOut) = getReserves(factory, path[i], path[i + 1]);
             amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
+        }
+    }
+
+    /**
+     * @notice Calculates the required input amount for a desired output amount using the constant product formula
+     * @dev Includes a 0.3% fee (997/1000)
+     * @param amountOut The desired output amount
+     * @param reserveIn The input token reserve
+     * @param reserveOut The output token reserve
+     * @return amountIn The required input amount (including 0.3% fee)
+     */
+    function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
+        internal
+        pure
+        returns (uint256 amountIn)
+    {
+        require(amountOut > 0, "INSUFFICIENT_OUTPUT_AMOUNT");
+        require(reserveIn > 0 && reserveOut > 0, "INSUFFICIENT_LIQUIDITY");
+
+        //            dx*(1-f) * 1000
+        //  dy =  ----------------------- * y
+        //         [x + dx*(1-f)] * 1000
+        //
+        //  =>
+        //
+        //            x * dy * 1000
+        //  dx =  -------------------------
+        //         (y - dy) * (1-f) * 1000
+
+        uint256 numerator = reserveIn * amountOut * 1000;
+        uint256 denominator = (reserveOut - amountOut) * 997;
+
+        // Add 1 to ensure sufficient input amount
+        amountIn = (numerator / denominator) + 1;
+    }
+
+    /**
+     * @notice Calculates the required input amounts for each swap in a multi-hop trade
+     * @dev Works backwards from the desired output amount to calculate all required inputs
+     * @param factory The factory contract address used to find pairs
+     * @param amountOut The desired final output amount
+     * @param path Array of token addresses defining the swap route
+     * @return amounts Array where amounts[0] is the initial input amount needed and
+     *                 amounts[1...n] are the subsequent output amounts,
+     *                 with amounts[n] being the final amountOut
+     */
+    function getAmountsIn(address factory, uint256 amountOut, address[] memory path)
+        internal
+        returns (uint256[] memory amounts)
+    {
+        require(path.length >= 2, "INVALID_PATH");
+
+        // Initialize array to store all amounts in the path
+        amounts = new uint256[](path.length);
+
+        // Set the final output amount
+        amounts[amounts.length - 1] = amountOut;
+
+        // Loop backwards through the path to calculate required input amounts
+        for (uint256 i = path.length - 1; i > 0; i--) {
+            (uint256 reserveIn, uint256 reserveOut) = getReserves(factory, path[i - 1], path[i]);
+
+            // Calculate required input amount for current step
+            amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut);
         }
     }
 }

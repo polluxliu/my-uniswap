@@ -102,7 +102,7 @@ contract MyswapPairTest is Test {
         pair.transfer(address(pair), liquidity);
 
         // Burn the liquidity tokens and withdraw the underlying assets
-        pair.burn();
+        pair.burn(address(this));
 
         // Assert the user has no LP tokens remaining
         assertEq(pair.balanceOf(address(this)), 0);
@@ -135,7 +135,7 @@ contract MyswapPairTest is Test {
         pair.transfer(address(pair), liquidity);
 
         // Burn the liquidity tokens and withdraw the underlying assets
-        pair.burn();
+        pair.burn(address(this));
 
         // Assert the user has no LP tokens remaining
         assertEq(pair.balanceOf(address(this)), 0);
@@ -173,7 +173,7 @@ contract MyswapPairTest is Test {
         // This contract burns its LP tokens
         uint256 balance = pair.balanceOf(address(this));
         pair.transfer(address(pair), balance);
-        pair.burn();
+        pair.burn(address(this));
 
         // Assert balances and reserves after burning
         assertEq(pair.balanceOf(address(this)), 0);
@@ -186,7 +186,7 @@ contract MyswapPairTest is Test {
         vm.startPrank(userA);
         uint256 balanceOfUserA = pair.balanceOf(userA);
         pair.transfer(address(pair), balanceOfUserA);
-        pair.burn();
+        pair.burn(userA);
         vm.stopPrank();
 
         // Assert UserA's token balances after burning LP tokens
