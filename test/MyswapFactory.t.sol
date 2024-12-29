@@ -7,33 +7,29 @@ import "../src/V2/MyswapPair.sol";
 contract MyswapFactoryTest is Test {
     function setUp() public {}
 
-    // function test_generateCodeHashOfPairContract() public pure {
-    //     bytes32 initialCodeHash = keccak256(type(MyswapPair).creationCode);
+    function test_generateCodeHashOfPairContract() public pure {
+        bytes32 initialCodeHash = keccak256(type(MyswapPair).creationCode);
 
-    //     console.logBytes32(initialCodeHash);
+        console.logBytes32(initialCodeHash);
 
-    //     assertEq(
-    //         initialCodeHash,
-    //         hex"cf21606cda01b554f7e32ebe21a86cd486e8242de482d779d842dfa97bae8c8b",
-    //         "Code hash of MyswapPair contract is incorrect"
-    //     );
-    // }
+        assertEq(
+            initialCodeHash,
+            hex"f0d94172d9e66b0358f30053c4818f80355007e3176f3c99071a8ec5cd892d6b",
+            "Code hash of MyswapPair contract is incorrect"
+        );
+    }
 
-    function test_112multiply() public pure {
-        uint112 a = 2 ** 111;
-        // uint112 b = 2 ** 111;
+    function test_emptyBytes() public pure {
+        // 以下所有方式都会得到相同的结果 - 空字节数组
+        bytes memory emptyBytes1 = "";
+        bytes memory emptyBytes2 = new bytes(0);
+        bytes memory emptyBytes3 = hex"";
+        bytes memory emptyBytes4 = bytes("");
 
-        uint256 c = 2 ** 100;
-
-        a - c;
-
-        // unchecked {
-        // console.log(a*b);
-        // }
-        // uint256 c = uint256(a) * uint256(b);
-
-        // uint256 c = uint256(a) * uint256(b);
-
-        // assertEq(c, 20000, "112 multiplication is incorrect");
+        // 可以用 length 属性验证
+        assert(emptyBytes1.length == 0);
+        assert(emptyBytes2.length == 0);
+        assert(emptyBytes3.length == 0);
+        assert(emptyBytes4.length == 0);
     }
 }

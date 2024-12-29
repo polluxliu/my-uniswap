@@ -235,7 +235,9 @@ contract MyswapRouter {
             address _to = i < path.length - 1 ? MyswapLibrary.pairFor(address(factory), output, path[i + 1]) : to;
 
             // Execute the swap through the pair contract
-            IMyswapPair(MyswapLibrary.pairFor(address(factory), input, output)).swap(amount0Out, amount1Out, _to);
+            IMyswapPair(MyswapLibrary.pairFor(address(factory), input, output)).swap(
+                amount0Out, amount1Out, _to, new bytes(0)
+            );
         }
     }
 }

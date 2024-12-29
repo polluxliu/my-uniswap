@@ -8,9 +8,13 @@ interface IMyswapPair {
 
     function burn(address to) external returns (uint256 amount0, uint256 amount1);
 
-    function swap(uint256 amount0Out, uint256 amount1Out, address to) external;
+    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
 
     function getReserves() external returns (uint112, uint112);
 
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
+
+    function token0() external view returns (address);
+
+    function token1() external view returns (address);
 }

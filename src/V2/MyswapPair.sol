@@ -4,9 +4,12 @@ pragma solidity ^0.8.24;
 import "solmate/tokens/ERC20.sol";
 import "./libraries/Math.sol";
 import "./libraries/UQ112x112.sol";
+import "./IMyswapFlashloan.sol";
 
 interface IERC20 {
     function balanceOf(address account) external view returns (uint256);
+
+    function transfer(address to, uint256 amount) external;
 }
 
 contract MyswapPair is ERC20 {
@@ -151,8 +154,10 @@ contract MyswapPair is ERC20 {
      * @param amount0Out The amount of token0 to be sent to the recipient.
      * @param amount1Out The amount of token1 to be sent to the recipient.
      * @param to The address of the recipient.
+     * @param data Additional calldata passed to the recipient for custom operations.
+     *             Typically used to trigger flash loan logic or similar advanced functionality.
      */
-    function swap(uint256 amount0Out, uint256 amount1Out, address to) external ReentrancyGuard {
+    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external ReentrancyGuard {
         // Ensure that at least one of the output amounts is greater than zero
         require(amount0Out > 0 || amount1Out > 0, "INSUFFICIENT_OUTPUT_AMOUNT");
 
@@ -165,6 +170,13 @@ contract MyswapPair is ERC20 {
         // Perform the token transfers to the recipient
         if (amount0Out > 0) _safeTransfer(token0, to, amount0Out); // Only transfer token0 if amount0Out > 0
         if (amount1Out > 0) _safeTransfer(token1, to, amount1Out); // Only transfer token1 if amount1Out > 0
+
+        // If the `data` parameter is non-empty, it indicates a flash loan or custom operation.
+        // Calls the `executeOperation` function on the recipient contract (`to`), passing the
+        // necessary parameters including the sender, output amounts, and additional calldata.
+        // This allows the recipient to implement advanced logic such as arbitrage, liquidations,
+        // or other custom use cases leveraging the flash loan or swap.
+        if (data.length > 0) IMyswapFlashloan(to).executeOperation(msg.sender, amount0Out, amount1Out, data);
 
         // Calculate the new balances after the swap
         uint256 balance0 = IERC20(token0).balanceOf(address(this)); // Get updated balance of token0
